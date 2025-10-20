@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -13,35 +12,36 @@ const DashboardItem = ({
   to,
   icon,
   title,
-  description,
   stats = null
 }: {
   to: string;
   icon: React.ReactNode;
   title: string;
-  description: string;
   stats?: { present?: number; absent?: number; total?: number } | null;
 }) => {
   return (
     <Link
       to={to}
-      className="bg-physics-dark rounded-3xl p-6 hover:bg-physics-dark/70 transition-all flex flex-col items-center border-2 border-physics-gold/50 shadow-lg hover:shadow-physics-gold/20 hover:border-physics-gold/70"
+      className="group bg-gradient-to-br from-[#1a2332] to-[#1e2836] rounded-xl p-4 hover:from-[#1e2836] hover:to-[#243040] transition-all duration-200 flex flex-col items-center border border-[#d4af37]/30 hover:border-[#d4af37] hover:scale-102 transform"
     >
-      <div className="h-16 w-16 rounded-full bg-physics-navy flex items-center justify-center text-physics-gold mb-4">
+      <div className="h-12 w-12 rounded-xl bg-gradient-to-br from-[#0f1419] to-[#141a24] flex items-center justify-center text-[#d4af37] mb-3 group-hover:scale-105 transition-transform duration-200">
         {icon}
       </div>
-      <h3 className="text-xl font-bold text-physics-gold mb-2">{title}</h3>
+      <h3 className="text-base font-bold text-[#d4af37] text-center group-hover:text-[#ffd700] transition-colors duration-200">{title}</h3>
       {stats && (
-        <div className="mt-2 w-full">
-          <div className="flex justify-between text-sm text-white">
-            <div className="text-green-400">حضور: {stats.present || 0}</div>
-            <div className="text-red-400">غياب: {stats.absent || 0}</div>
+        <div className="mt-3 w-full">
+          <div className="flex justify-between text-xs mb-1.5">
+            <span className="text-[#10b981]">✓ {stats.present || 0}</span>
+            <span className="text-[#ef4444]">✗ {stats.absent || 0}</span>
           </div>
-          <div className="w-full bg-physics-navy h-2 rounded-full mt-1 overflow-hidden">
+          <div className="w-full bg-[#0f1419] h-2 rounded-full overflow-hidden">
             <div 
-              className="bg-green-500 h-full" 
+              className="bg-gradient-to-r from-[#10b981] to-[#34d399] h-full rounded-full transition-all duration-300" 
               style={{ width: `${stats.total ? (stats.present || 0) / stats.total * 100 : 0}%` }}
             />
+          </div>
+          <div className="text-center text-xs text-[#9ca3af] mt-1.5">
+            {stats.total || 0} حصة
           </div>
         </div>
       )}
@@ -105,168 +105,133 @@ const Dashboard = () => {
         <div className="max-w-6xl mx-auto">
           <h1 className="text-2xl font-bold text-physics-gold mb-8">لوحة التحكم</h1>
           
-          {/* Admin Dashboard Items */}
+          {/* Admin Dashboard Items - 9 مربعات */}
           {currentUser.role === "admin" && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <DashboardItem 
-                  to="/students" 
-                  icon={<Users size={32} />} 
-                  title="إدارة الطلاب" 
-                  description="إضافة وتعديل وحذف بيانات الطلاب" 
-                />
-                <DashboardItem 
-                  to="/parents" 
-                  icon={<UserPlus size={32} />} 
-                  title="إدارة أولياء الأمور" 
-                  description="إضافة حسابات لأولياء الأمور" 
-                />
-                <DashboardItem 
-                  to="/scan-code" 
-                  icon={<QrCode size={32} />} 
-                  title="تسجيل الحضور" 
-                  description="مسح كود الطلاب وتسجيل الحضور" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <DashboardItem 
-                  to="/attendance-list" 
-                  icon={<UserCheck size={32} />} 
-                  title="سجل الحضور" 
-                  description="عرض وإدارة سجل حضور الطلاب" 
-                />
-                <DashboardItem 
-                  to="/grades-management" 
-                  icon={<Award size={32} />} 
-                  title="سجل الدرجات" 
-                  description="إدخال وعرض درجات الطلاب" 
-                />
-                <DashboardItem 
-                  to="/payments" 
-                  icon={<DollarSign size={32} />} 
-                  title="إدارة المدفوعات" 
-                  description="تسجيل ومتابعة مدفوعات الطلاب" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <DashboardItem 
-                  to="/videos" 
-                  icon={<Video size={32} />} 
-                  title="الفيديوهات" 
-                  description="إدارة وعرض الدروس المرئية" 
-                />
-                <DashboardItem 
-                  to="/books" 
-                  icon={<Book size={32} />} 
-                  title="الكتب والملفات" 
-                  description="رفع وإدارة الملفات التعليمية" 
-                />
-                <DashboardItem
-                  to="/advanced-features"
-                  icon={<Settings size={32} />}
-                  title="ميزات متقدمة"
-                  description="ميزات إضافية متقدمة للنظام"
-                />
-              </div>
-            </>
+            <div className="grid grid-cols-3 gap-3">
+              <DashboardItem
+                to="/students"
+                icon={<Users size={20} />}
+                title="إدارة الطلاب"
+              />
+              <DashboardItem
+                to="/parents"
+                icon={<UserPlus size={20} />}
+                title="أولياء الأمور"
+              />
+              <DashboardItem
+                to="/scan-code"
+                icon={<QrCode size={20} />}
+                title="تسجيل الحضور"
+              />
+              <DashboardItem
+                to="/attendance-list"
+                icon={<UserCheck size={20} />}
+                title="سجل الحضور"
+              />
+              <DashboardItem
+                to="/grades-management"
+                icon={<Award size={20} />}
+                title="الدرجات"
+              />
+              <DashboardItem
+                to="/payments"
+                icon={<DollarSign size={20} />}
+                title="المدفوعات"
+              />
+              <DashboardItem
+                to="/videos"
+                icon={<Video size={20} />}
+                title="الفيديوهات"
+              />
+              <DashboardItem
+                to="/books"
+                icon={<Book size={20} />}
+                title="الكتب"
+              />
+              <DashboardItem
+                to="/advanced-features"
+                icon={<Settings size={20} />}
+                title="ميزات متقدمة"
+              />
+            </div>
           )}
           
           {/* Student Dashboard Items */}
           {currentUser.role === "student" && (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <DashboardItem 
                 to="/student-code" 
-                icon={<QrCode size={32} />} 
-                title="كود الطالب" 
-                description="عرض الكود الخاص بك لتسجيل الحضور" 
+                icon={<QrCode size={20} />} 
+                title="كود الطالب"
               />
               <DashboardItem 
                 to="/student-password" 
-                icon={<Lock size={32} />} 
-                title="كلمة المرور" 
-                description="عرض كلمة المرور الخاصة بك" 
+                icon={<Lock size={20} />} 
+                title="كلمة المرور"
               />
               <DashboardItem 
                 to="/student-grades" 
-                icon={<Award size={32} />} 
-                title="الدرجات" 
-                description="عرض الدرجات والتقييمات" 
+                icon={<Award size={20} />} 
+                title="الدرجات"
               />
               <DashboardItem 
                 to="/attendance-record" 
-                icon={<CheckSquare size={32} />} 
-                title="سجل الحضور" 
-                description="عرض سجل الحضور الخاص بك" 
+                icon={<CheckSquare size={20} />} 
+                title="سجل الحضور"
                 stats={attendanceStats}
               />
               <DashboardItem 
                 to="/videos" 
-                icon={<Video size={32} />} 
-                title="الفيديوهات" 
-                description="مشاهدة الفيديوهات التعليمية" 
+                icon={<Video size={20} />} 
+                title="الفيديوهات"
               />
               <DashboardItem 
                 to="/student-books" 
-                icon={<Book size={32} />} 
-                title="الكتب والملفات" 
-                description="تحميل المذكرات والملفات التعليمية" 
+                icon={<Book size={20} />} 
+                title="الكتب"
               />
               <DashboardItem 
                 to="/student-payments" 
-                icon={<DollarSign size={32} />} 
-                title="المدفوعات" 
-                description="عرض سجل المدفوعات الخاص بك" 
+                icon={<DollarSign size={20} />} 
+                title="المدفوعات"
               />
             </div>
           )}
           
           {/* Parent Dashboard Items */}
           {currentUser.role === "parent" && (
-            <>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-                <DashboardItem 
-                  to="/grades" 
-                  icon={<Award size={32} />} 
-                  title="الدرجات" 
-                  description="عرض درجات الطالب" 
-                />
-                <DashboardItem 
-                  to="/attendance-record" 
-                  icon={<CheckSquare size={32} />} 
-                  title="سجل الحضور" 
-                  description="عرض سجل حضور الطالب" 
-                />
-                <DashboardItem 
-                  to="/parent-payments" 
-                  icon={<DollarSign size={32} />} 
-                  title="المدفوعات" 
-                  description="عرض سجل مدفوعات الطالب" 
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <DashboardItem 
-                  to="/parent-student-code" 
-                  icon={<QrCode size={32} />} 
-                  title="كود الطالب" 
-                  description="عرض كود الطالب لتسجيل الحضور" 
-                />
-                <DashboardItem 
-                  to="/parent-student-password" 
-                  icon={<Lock size={32} />} 
-                  title="كلمة مرور الطالب" 
-                  description="عرض كلمة مرور حساب الطالب" 
-                />
-                <DashboardItem 
-                  to="/parent-account-info" 
-                  icon={<User size={32} />} 
-                  title="بيانات الحساب" 
-                  description="عرض بيانات حساب ولي الأمر والطالب" 
-                />
-              </div>
-            </>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+              <DashboardItem 
+                to="/grades" 
+                icon={<Award size={20} />} 
+                title="الدرجات"
+              />
+              <DashboardItem 
+                to="/attendance-record" 
+                icon={<CheckSquare size={20} />} 
+                title="سجل الحضور"
+              />
+              <DashboardItem 
+                to="/parent-payments" 
+                icon={<DollarSign size={20} />} 
+                title="المدفوعات"
+              />
+              <DashboardItem 
+                to="/parent-student-code" 
+                icon={<QrCode size={20} />} 
+                title="كود الطالب"
+              />
+              <DashboardItem 
+                to="/parent-student-password" 
+                icon={<Lock size={20} />} 
+                title="كلمة مرور الطالب"
+              />
+              <DashboardItem 
+                to="/parent-account-info" 
+                icon={<User size={20} />} 
+                title="بيانات الحساب"
+              />
+            </div>
           )}
         </div>
       </main>

@@ -244,13 +244,17 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         const targetDate = new Date(selectedDate);
         const targetDateString = targetDate.toISOString().split('T')[0];
 
-        // العثور على الطلاب الذين لم يسجلوا حضورهم في التاريخ المحدد
-        const studentsWithoutAttendance = studentsInGroup.filter(student => {
-          const studentAttendanceOnDate = attendance.filter(record => {
+        // الطلاب الذين سجلوا حضورهم في التاريخ المحدد (حاضر فقط)
+        const studentsWithAttendance = attendance
+          .filter(record => {
             const recordDate = new Date(record.date).toISOString().split('T')[0];
-            return record.studentId === student.id && recordDate === targetDateString;
-          });
-          return studentAttendanceOnDate.length === 0;
+            return recordDate === targetDateString && record.status === "present";
+          })
+          .map(record => record.studentId);
+
+        // الطلاب الذين لم يسجلوا حضورهم (نستبعد من لديهم حضور)
+        const studentsWithoutAttendance = studentsInGroup.filter(student => {
+          return !studentsWithAttendance.includes(student.id);
         });
 
         if (studentsWithoutAttendance.length === 0) {
@@ -420,12 +424,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Fetch attendance from Turso - optimized with date filtering for recent records
+  // Fetch attendance from Turso - fetch all records
   const fetchAttendance = async () => {
     setIsLoadingAttendance(true);
     try {
-      // Fetch all attendance, but limit to recent records for performance
-      const result = await turso.execute("SELECT * FROM attendance ORDER BY date DESC, time DESC LIMIT 1000");
+      // Fetch all attendance records without limit to show complete history
+      const result = await turso.execute("SELECT * FROM attendance ORDER BY date DESC, time DESC");
       const formattedAttendance = result.rows.map((row: any) => ({
         id: row.id,
         studentId: row.student_id,
@@ -820,7 +824,7 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  // Add attendance function with duplicate prevention and lesson validation
+  // Add attendance function - Fast and simple without duplicate checks
   const addAttendance = async (
     studentId: string,
     studentName: string,
@@ -828,51 +832,12 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
     lessonNumber: number = 1
   ) => {
     try {
-      const currentTime = new Date();
-      const today = currentTime.toISOString().split('T')[0];
-      
-      // Check for existing attendance today for this student and lesson
-      const existingCheck = await turso.execute(
-        "SELECT id FROM attendance WHERE student_id = ? AND lesson_number = ? AND DATE(date) = ?",
-        [studentId, lessonNumber, today]
-      );
-      
-      if (existingCheck.rows.length > 0) {
-        console.log(`Duplicate attendance detected for student ${studentId}, lesson ${lessonNumber} today`);
-        toast({
-          variant: "destructive",
-          title: "❌ سجل موجود بالفعل",
-          description: "تم تسجيل الحضور لهذه الحصة اليوم بالفعل"
-        });
-        return null;
-      }
-      
-      // Additional check: ensure lesson number is sequential (no big jumps)
-      const recentAttendance = await turso.execute(
-        "SELECT lesson_number FROM attendance WHERE student_id = ? ORDER BY date DESC, time DESC LIMIT 1",
-        [studentId]
-      );
-      
-      if (recentAttendance.rows.length > 0) {
-        const lastLesson = recentAttendance.rows[0].lesson_number;
-        if (lessonNumber > lastLesson + 1) {
-          console.log(`Lesson number jump detected: ${lastLesson} to ${lessonNumber}`);
-          // Auto-correct to sequential
-          lessonNumber = lastLesson + 1;
-          toast({
-            title: "⚠️ تم تصحيح رقم الحصة",
-            description: `تم تعديل رقم الحصة إلى ${lessonNumber} للحفاظ على التسلسل`
-          });
-        } else if (lessonNumber <= lastLesson) {
-          // If same or lower, use next
-          lessonNumber = lastLesson + 1;
-        }
-      }
-      
       const id = generateId();
+      const currentTime = new Date();
       const time = currentTime.toLocaleTimeString();
       const date = currentTime.toISOString();
 
+      // Direct insert without any checks for maximum speed
       await turso.execute({
         sql: `
           INSERT INTO attendance (id, student_id, student_name, status, lesson_number, time, date)
@@ -891,10 +856,8 @@ export function DataProvider({ children }: { children: React.ReactNode }) {
         date
       };
       
+      // Update local state immediately
       setAttendance(prevAttendance => [...prevAttendance, newAttendance]);
-      
-      // Refresh attendance data to ensure latest records are loaded
-      await fetchAttendance();
       
       return newAttendance;
     } catch (error: any) {

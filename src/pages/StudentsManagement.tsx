@@ -17,7 +17,6 @@ const StudentsManagement = () => {
   const [showEditForm, setShowEditForm] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchField, setSearchField] = useState<"all" | "name" | "phone" | "code" | "group">("all");
-  const [students, setStudents] = useState<Student[]>([]);
   const [editingStudent, setEditingStudent] = useState<Student | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -29,10 +28,8 @@ const StudentsManagement = () => {
   const [group, setGroup] = useState("");
   const [grade, setGrade] = useState<"first" | "second" | "third">("first");
   
-  useEffect(() => {
-    // Load students when component mounts
-    setStudents(getAllStudents());
-  }, [getAllStudents]);
+  // Get students directly from AuthContext - always live!
+  const students = getAllStudents();
   
   const filteredStudents = students.filter(student => {
     const query = sanitizeSearchText(searchQuery);
@@ -64,7 +61,7 @@ const StudentsManagement = () => {
     
     try {
       const newStudent = await createStudent(name, phone, parentPhone, group, grade);
-      setStudents(getAllStudents()); // Refresh list
+      // No need to refresh - data is live!
       setName("");
       setPhone("");
       setParentPhone("");
@@ -111,7 +108,7 @@ const StudentsManagement = () => {
         grade
       );
       
-      setStudents(getAllStudents()); // Refresh list
+      // No need to refresh - data is live!
       setShowEditForm(false);
       setEditingStudent(null);
       
@@ -137,7 +134,7 @@ const StudentsManagement = () => {
       
       try {
         await deleteStudent(studentId);
-        setStudents(getAllStudents()); // Refresh list
+        // No need to refresh - data is live!
         
         toast({
           title: "تم حذف الطالب",

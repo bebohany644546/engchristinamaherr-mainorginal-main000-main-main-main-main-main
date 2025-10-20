@@ -33,9 +33,7 @@ const AttendanceListByGrade = () => {
   const navigate = useNavigate();
   const { grade = "first" } = useParams<{ grade: "first" | "second" | "third" }>();
   const { currentUser, getAllStudents } = useAuth();
-  const { getStudentAttendance, deleteAttendanceRecord, getDisplayLessonNumber, registerBulkAbsence, isLoadingAttendance } = useData();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [attendanceRecords, setAttendanceRecords] = useState<Attendance[]>([]);
+  const { getStudentAttendance, deleteAttendanceRecord, getDisplayLessonNumber, registerBulkAbsence, isLoadingAttendance, attendance } = useData();
   const [filter, setFilter] = useState<"all" | "present" | "absent" | "unregistered">("all");
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [showAdvancedFilter, setShowAdvancedFilter] = useState<boolean>(false);
@@ -46,37 +44,23 @@ const AttendanceListByGrade = () => {
     dateRange: { from: "", to: "" },
     useDateRange: false
   });
-  
-  useEffect(() => {
-    if (!currentUser) return;
-    
-    // Get all students for this grade
-    const allStudents = getAllStudents();
-    const gradeStudents = allStudents.filter(student => student.grade === grade);
-    setStudents(gradeStudents);
-    
-    // Get attendance records for all students
-    const records: Attendance[] = [];
-    gradeStudents.forEach(student => {
-      const studentRecords = getStudentAttendance(student.id);
-      records.push(...studentRecords);
-    });
-    
-    setAttendanceRecords(records);
-  }, [currentUser, getAllStudents, getStudentAttendance, grade]);
+
+  // Get live data directly from contexts
+  const allStudents = getAllStudents();
+  const gradeStudents = allStudents.filter(student => student.grade === grade);
+
+  // Get attendance records for all students - live data!
+  const attendanceRecords = attendance;
   
   // Check for unregistered students (students without attendance records)
-  const studentsWithoutAttendance = students.filter(student => {
+  const studentsWithoutAttendance = gradeStudents.filter(student => {
     return !attendanceRecords.some(record => record.studentId === student.id);
   });
   
   const handleDeleteRecord = (recordId: string, studentName: string) => {
     if (window.confirm(`هل أنت متأكد من حذف سجل الحضور للطالب ${studentName}؟`)) {
       deleteAttendanceRecord(recordId);
-      
-      // تحديث القائمة بعد الحذف
-      setAttendanceRecords(prev => prev.filter(record => record.id !== recordId));
-      
+
       toast({
         title: "تم الحذف",
         description: `تم حذف سجل الحضور للطالب ${studentName} بنجاح`,
@@ -88,14 +72,17 @@ const AttendanceListByGrade = () => {
   const filteredRecords = filter === "unregistered" 
     ? [] // If filter is unregistered, we'll display a different view
     : attendanceRecords.filter(record => {
+        // Only keep records that belong to the currently selected grade
+        const student = gradeStudents.find(s => s.id === record.studentId);
+        if (!student) {
+          return false;
+        }
+
         // Apply status filter
         if (filter !== "all" && record.status !== filter) {
           return false;
         }
-        
-        // Find the corresponding student for additional filtering
-        const student = students.find(s => s.id === record.studentId);
-        
+
         // Apply comprehensive search filter if provided
         if (searchTerm.trim() !== "") {
           const searchLower = searchTerm.toLowerCase();
@@ -103,8 +90,8 @@ const AttendanceListByGrade = () => {
           // Search in multiple fields: name, code, group, date, time, lesson number
           const searchableFields = [
             record.studentName.toLowerCase(),
-            student?.code?.toLowerCase() || "",
-            student?.group?.toLowerCase() || "",
+            student.code?.toLowerCase() || "",
+            student.group?.toLowerCase() || "",
             formatDate(record.date).toLowerCase(),
             record.time?.toLowerCase() || "",
             `الحصة ${getDisplayLessonNumber(record.lessonNumber)}`.toLowerCase(),
@@ -120,11 +107,11 @@ const AttendanceListByGrade = () => {
             return false;
           }
         }
-        
+
         // Apply advanced filters
         if (advancedFilters.groupName.trim() !== "") {
           const advancedGroupLower = advancedFilters.groupName.toLowerCase();
-          if (!student?.group || !student.group.toLowerCase().includes(advancedGroupLower)) {
+          if (!student.group || !student.group.toLowerCase().includes(advancedGroupLower)) {
             return false;
           }
         }
@@ -143,7 +130,7 @@ const AttendanceListByGrade = () => {
             return false;
           }
         }
-        
+
         return true;
       });
   
@@ -169,7 +156,7 @@ const AttendanceListByGrade = () => {
   // دالة تسجيل الغياب التلقائي
   const handleRegisterAbsence = async (criteria: AbsenceCriteria) => {
     try {
-      const result = await registerBulkAbsence(criteria.groupName, criteria.selectedDate, () => students);
+      const result = await registerBulkAbsence(criteria.groupName, criteria.selectedDate, () => allStudents);
 
       if (result.success) {
         toast({
@@ -309,7 +296,7 @@ const AttendanceListByGrade = () => {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {filteredStudentsWithoutAttendance.map(student => (
+                  {studentsWithoutAttendance.map(student => (
                       <TableRow key={student.id} className="border-t border-physics-navy hover:bg-physics-navy/30">
                         <TableCell className="text-white">{student.name}</TableCell>
                         <TableCell className="text-white">{student.code}</TableCell>
@@ -343,7 +330,7 @@ const AttendanceListByGrade = () => {
                 </TableHeader>
                 <TableBody>
                   {filteredRecords.map((record) => {
-                    const student = students.find(s => s.id === record.studentId);
+                    const student = gradeStudents.find(s => s.id === record.studentId);
                     
                     return (
                       <TableRow key={record.id} className="border-t border-physics-navy hover:bg-physics-navy/30">
